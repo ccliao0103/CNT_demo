@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>奈米碳管 - 廖老師好帥版</title>
+    <title>奈米碳管手勢互動模擬</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -30,32 +30,14 @@
         /* 隱藏攝影機 */
         .input_video { position: absolute !important; visibility: hidden !important; width: 1px; height: 1px; opacity: 0; }
 
-        /* 狀態提示 */
+        /* 狀態提示 (修改 2: 更新提示文字) */
         #gesture-hint {
             position: absolute; bottom: 20px; left: 0; width: 100%;
             text-align: center; font-size: 14px; color: #888; z-index: 5;
             text-shadow: 1px 1px 2px black;
         }
 
-        /* 廖老師好帥 特效字卡 */
-        #teacher-msg {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            font-size: 4rem;
-            font-weight: 900;
-            color: #FFD700; /* 金色 */
-            text-shadow: 0 0 10px #FF4500, 0 0 20px #FF4500, 2px 2px 0px #fff;
-            z-index: 100;
-            pointer-events: none;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
-            white-space: nowrap;
-            opacity: 0;
-        }
-        #teacher-msg.show {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
+        /* (修改 3: 已移除特效字卡的 CSS) */
     </style>
 </head>
 <body>
@@ -79,9 +61,7 @@
         </div>
     </div>
 
-    <div id="teacher-msg">廖老師好帥 😎</div>
-
-    <div id="gesture-hint">✊握拳:縮小 | 🖐️張開:放大 | ✌️勝利:??</div>
+    <div id="gesture-hint">✊握拳:縮小 | 🖐️張開:放大</div>
 
     <div id="canvas-container"></div>
     <video id="input_video" class="input_video" playsinline></video>
@@ -121,18 +101,19 @@
         cntGroup = new THREE.Group();
         scene.add(cntGroup);
 
-        // --- 視覺設定：球棍模型 (Ball and Stick) ---
+        // --- 視覺設定：球棍模型 ---
         
         // 1. 原子：小球
-        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); // 半徑 0.35
+        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); 
         const atomMat = new THREE.MeshPhongMaterial({ color: 0x999999, shininess: 100 });
         atomMesh = new THREE.InstancedMesh(atomGeo, atomMat, MAX_ATOMS);
         cntGroup.add(atomMesh);
 
-        // 2. 鍵結：細棍
-        const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 8); // 半徑 0.1
-        bondGeo.translate(0, 0.5, 0); 
-        bondGeo.rotateX(Math.PI / 2); // 轉向讓 Z 軸為長度方向
+        // 2. 鍵結：細棍 (修改 6: 修正幾何中心以確保連續性)
+        const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 8); 
+        // bondGeo.translate(0, 0.5, 0); // <--- 【關鍵修改】移除這行，讓軸心保持在中心
+        bondGeo.rotateX(Math.PI / 2); // 轉向讓 Z 軸為長度方向，方便 lookAt 對齊
+        
         const bondMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
         bondMesh = new THREE.InstancedMesh(bondGeo, bondMat, MAX_ATOMS * 1.5);
         cntGroup.add(bondMesh);
@@ -144,46 +125,41 @@
         });
     }
 
-    // --- 奈米碳管生成 (修復鍵結斷裂問題) ---
+    // --- 奈米碳管生成 ---
     function generateCNT(n, m, lengthAngstrom) {
         const a = Math.sqrt(3) * ACC;
         const circumference = a * Math.sqrt(n*n + m*m + n*m);
         const diameter = circumference / Math.PI;
         
-        // 晶格常數與向量
         const a1x = 1.5 * ACC, a1y = (Math.sqrt(3)/2) * ACC;
         const a2x = 1.5 * ACC, a2y = -(Math.sqrt(3)/2) * ACC;
         const Cx = n * a1x + m * a2x, Cy = n * a1y + m * a2y;
         const Clen = Math.sqrt(Cx*Cx + Cy*Cy);
-        const ux = Cx / Clen, uy = Cy / Clen; // 圓周方向
-        const vx = -uy, vy = ux; // 軸向
+        const ux = Cx / Clen, uy = Cy / Clen; 
+        const vx = -uy, vy = ux; 
 
         const atoms = [];
         const dummy = new THREE.Object3D();
         let atomCount = 0;
         
-        // 擴大掃描範圍以確保邊緣完整
         const iMax = Math.ceil((lengthAngstrom + circumference)/ACC) + 3;
 
         for (let i = -iMax; i < iMax; i++) {
             for (let j = -iMax; j < iMax; j++) {
-                // 兩個基底原子
                 processAtom(i * a1x + j * a2x, i * a1y + j * a2y);
                 processAtom(i * a1x + j * a2x + ACC, i * a1y + j * a2y);
             }
         }
 
         function processAtom(x, y) {
-            const u = x * ux + y * uy; // 圓周投影
-            const v = x * vx + y * vy; // 軸向投影
+            const u = x * ux + y * uy; 
+            const v = x * vx + y * vy; 
 
-            // 裁切
             if (v >= 0 && v < lengthAngstrom) {
                 if (u > -0.01 && u < circumference - 0.01) {
-                    // 3D 捲曲
                     const theta = (u / circumference) * Math.PI * 2;
                     const R = diameter / 2;
-                    const x3d = v - lengthAngstrom/2; // 沿 X 軸長
+                    const x3d = v - lengthAngstrom/2; 
                     const y3d = R * Math.cos(theta);
                     const z3d = R * Math.sin(theta);
 
@@ -203,10 +179,8 @@
         atomMesh.count = atomCount;
         atomMesh.instanceMatrix.needsUpdate = true;
 
-        // 生成鍵結 - 關鍵修正：增加判定距離
+        // 生成鍵結
         let bondCount = 0;
-        // C-C 是 1.42，原本設 1.6 可能在捲曲時因為弦長變短而被忽略
-        // 設為 1.9 非常安全，因為下一個最近鄰居是 2.46 (sqrt(3)*acc)
         const bondLimitSq = 1.9 * 1.9; 
 
         for (let i = 0; i < atoms.length; i++) {
@@ -219,12 +193,16 @@
                 if (distSq < bondLimitSq) {
                     if (bondCount < MAX_ATOMS * 1.5) {
                         const dist = Math.sqrt(distSq);
+                        // 計算兩點中點
                         const midX = (atoms[i].x + atoms[j].x) / 2;
                         const midY = (atoms[i].y + atoms[j].y) / 2;
                         const midZ = (atoms[i].z + atoms[j].z) / 2;
 
+                        // 將圓柱(軸心在中心)放置於中點
                         dummy.position.set(midX, midY, midZ);
+                        // 將 Z 軸指向目標點 (因為我們上面 rotateX(PI/2) 了)
                         dummy.lookAt(atoms[j].x, atoms[j].y, atoms[j].z);
+                        // Z 軸縮放至兩點距離，達到完美連接
                         dummy.scale.set(1, 1, dist);
                         dummy.updateMatrix();
                         
@@ -239,10 +217,10 @@
     }
 
     // --- MediaPipe 手勢邏輯 ---
-    const msgDiv = document.getElementById('teacher-msg');
+    // (修改 7: 移除 msgDiv 變數)
     
     function onResults(results) {
-        let isVictory = false;
+        // (修改 8: 移除 isVictory 變數)
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             const landmarks = results.multiHandLandmarks[0];
@@ -254,46 +232,28 @@
             const pinkyTip = landmarks[20];
             const handCenter = landmarks[9];
 
-            // 計算指尖到手腕距離
             const dIndex = dist(indexTip, wrist);
             const dMiddle = dist(middleTip, wrist);
             const dRing = dist(ringTip, wrist);
             const dPinky = dist(pinkyTip, wrist);
-            const dThumb = dist(thumbTip, wrist); // 拇指比較短，判定要寬鬆
 
             // --- 手勢判定 ---
-
-            // 1. 握拳 (Fist): 四指都靠近手心
-            // 閾值視手掌大小而定，0.15~0.2 左右
             const isFist = (dIndex < 0.25 && dMiddle < 0.25 && dRing < 0.25 && dPinky < 0.25);
-
-            // 2. 五指張開 (Open): 四指都遠離
             const isOpen = (dIndex > 0.3 && dMiddle > 0.3 && dRing > 0.3 && dPinky > 0.3);
+            // (修改 9: 移除勝利手勢判定)
 
-            // 3. 勝利手勢 (Victory): 食指中指伸直，無名指小指彎曲
-            // 條件：食指中指遠，無名小指近
-            isVictory = (dIndex > 0.3 && dMiddle > 0.3 && dRing < 0.25 && dPinky < 0.25);
-
-            // --- 觸發功能 ---
-
-            if (isVictory) {
-                // ✌️ 顯示特效
-                msgDiv.classList.add('show');
-            } else {
-                msgDiv.classList.remove('show');
-                
-                // 縮放邏輯
-                if (isFist) {
-                    currentScale -= 0.03; // ✊ 縮小
-                } else if (isOpen) {
-                    currentScale += 0.03; // 🖐️ 放大
-                }
-                // 限制範圍
-                currentScale = Math.max(0.2, Math.min(currentScale, 6.0));
+            // --- 觸發功能 (修改 10: 移除字卡觸發邏輯) ---
+            
+            // 縮放邏輯
+            if (isFist) {
+                currentScale -= 0.03; // ✊ 縮小
+            } else if (isOpen) {
+                currentScale += 0.03; // 🖐️ 放大
             }
+            currentScale = Math.max(0.2, Math.min(currentScale, 6.0));
 
-            // 旋轉邏輯 (只要手在動，就跟著轉)
-            if (lastHandX !== null && lastHandY !== null && !isVictory) {
+            // 旋轉邏輯
+            if (lastHandX !== null && lastHandY !== null) {
                 const deltaX = handCenter.x - lastHandX;
                 const deltaY = handCenter.y - lastHandY;
                 const sensitivity = 5.0;
@@ -306,7 +266,7 @@
 
         } else {
             lastHandX = null;
-            msgDiv.classList.remove('show');
+            // (修改 11: 移除 hide msgDiv 邏輯)
         }
     }
     
@@ -314,7 +274,7 @@
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
 
-    // --- UI 連動 ---
+    // --- UI 連動 (維持不變) ---
     function updateTypeUI() {
         const type = document.getElementById('type-select').value;
         const nInput = document.getElementById('n-input');
