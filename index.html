@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>奈米碳管手勢模擬器 (Three.js + MediaPipe)</title>
+    <title>奈米碳管 - 廖老師好帥版</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -11,129 +11,51 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #050505;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            color: #ffffff;
-            user-select: none;
-        }
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: sans-serif; color: white; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        /* 控制面板 */
+        /* UI 面板 */
         #ui-panel {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 360px;
-            background: rgba(30, 30, 30, 0.85);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            z-index: 10;
-            padding: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 360px;
+            background: rgba(40, 40, 40, 0.85); backdrop-filter: blur(8px);
+            border-radius: 15px; z-index: 10; padding: 10px;
             border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            display: flex; flex-direction: column; gap: 8px;
         }
-
-        .control-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        label {
-            font-size: 14px;
-            color: #aaa;
-            white-space: nowrap;
-        }
-
-        select, input[type="number"] {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid #444;
-            color: white;
-            padding: 6px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
-            outline: none;
-        }
+        .control-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        select, input { background: #222; border: 1px solid #555; color: white; padding: 5px; border-radius: 5px; text-align: center; }
+        label { font-size: 13px; color: #ccc; }
         
-        select { flex: 1; }
-        input[type="number"] { width: 50px; }
-
-        /* 滑桿樣式 */
-        input[type="range"] {
-            width: 100%;
-            height: 4px;
-            background: #444;
-            border-radius: 2px;
-            outline: none;
-            -webkit-appearance: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #2196F3;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .info-display {
-            font-size: 12px;
-            color: #888;
-            text-align: center;
-            margin-top: -5px;
-            display: flex;
-            justify-content: space-around;
-        }
-        .info-value { color: #2196F3; font-weight: bold; }
-
         /* 隱藏攝影機 */
-        .input_video {
-            position: absolute !important;
-            visibility: hidden !important;
-            width: 1px; height: 1px;
-            pointer-events: none;
-            opacity: 0;
+        .input_video { position: absolute !important; visibility: hidden !important; width: 1px; height: 1px; opacity: 0; }
+
+        /* 狀態提示 */
+        #gesture-hint {
+            position: absolute; bottom: 20px; left: 0; width: 100%;
+            text-align: center; font-size: 14px; color: #888; z-index: 5;
+            text-shadow: 1px 1px 2px black;
         }
-        
-        /* 狀態指示器 */
-        #status-indicator {
+
+        /* 廖老師好帥 特效字卡 */
+        #teacher-msg {
             position: absolute;
-            top: 180px; /* 移到面板下方 */
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 6px 16px;
-            background: rgba(255, 69, 58, 0.8);
-            border-radius: 20px;
-            font-size: 13px;
-            color: white;
-            z-index: 9;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 4rem;
+            font-weight: 900;
+            color: #FFD700; /* 金色 */
+            text-shadow: 0 0 10px #FF4500, 0 0 20px #FF4500, 2px 2px 0px #fff;
+            z-index: 100;
             pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+            white-space: nowrap;
             opacity: 0;
-            transition: opacity 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: bold;
         }
-        #status-indicator.visible { opacity: 1; }
+        #teacher-msg.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -147,50 +69,35 @@
                 <option value="chiral">Chiral (n, m)</option>
             </select>
         </div>
-
         <div class="control-row">
-            <label>n:</label>
-            <input type="number" id="n-input" value="5" min="2" max="30" onchange="onParamChange()">
-            <label>m:</label>
-            <input type="number" id="m-input" value="5" min="0" max="30" onchange="onParamChange()" disabled>
+            <label>n:</label><input type="number" id="n-input" value="5" min="2" max="25" onchange="onParamChange()" style="width:40px">
+            <label>m:</label><input type="number" id="m-input" value="5" min="0" max="25" onchange="onParamChange()" disabled style="width:40px">
         </div>
-
-        <div class="control-row" style="flex-direction: column; align-items: stretch; gap: 5px;">
-            <div style="display:flex; justify-content:space-between;">
-                <label>管長 Length (A)</label>
-                <span id="len-val" style="font-size:12px; color:#ddd;">20</span>
-            </div>
-            <input type="range" id="len-slider" min="10" max="100" value="20" step="5" oninput="onParamChange()">
-        </div>
-
-        <div class="info-display">
-            <span>直徑: <span id="info-d" class="info-value">--</span> A</span>
-            <span>角度: <span id="info-theta" class="info-value">--</span>°</span>
+        <div class="control-row">
+            <label>長度 Len</label>
+            <input type="range" id="len-slider" min="10" max="80" value="20" step="5" oninput="onParamChange()" style="flex:1">
         </div>
     </div>
 
-    <div id="status-indicator">
-        <span>? 握拳暫停 / 重置位置</span>
-    </div>
+    <div id="teacher-msg">廖老師好帥 😎</div>
+
+    <div id="gesture-hint">✊握拳:縮小 | 🖐️張開:放大 | ✌️勝利:??</div>
 
     <div id="canvas-container"></div>
     <video id="input_video" class="input_video" playsinline></video>
 
 <script>
     // --- 變數 ---
-    let scene, camera, renderer;
-    let atomMesh, bondMesh; // InstancedMesh 物件
-    let cntGroup; // 包含所有 InstancedMesh 的群組
-
-    // 控制變數
-    let currentRotationX = 0;
-    let currentRotationY = 0;
+    let scene, camera, renderer, cntGroup;
+    let atomMesh, bondMesh;
+    
+    // 操作變數
+    let currentRotationX = 0, currentRotationY = 0;
     let currentScale = 1;
-    let lastHandX = null, lastHandY = null, lastPinchDist = null;
+    let lastHandX = null, lastHandY = null;
 
-    // 物理常數
-    const ACC = 1.42; // C-C 鍵長 (Angstrom)
-    const MAX_ATOMS = 5000; // 預留的最大原子數緩衝區
+    const ACC = 1.42; 
+    const MAX_ATOMS = 6000; 
 
     // --- Three.js 初始化 ---
     function initThree() {
@@ -199,45 +106,35 @@
         scene.background = new THREE.Color(0x050505);
 
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 30; // 稍微拉遠以容納長管
+        camera.position.z = 35;
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // 燈光
-        const ambientLight = new THREE.AmbientLight(0x555555, 1.5);
-        scene.add(ambientLight);
-        
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        mainLight.position.set(10, 10, 20);
-        scene.add(mainLight);
+        const light = new THREE.DirectionalLight(0xffffff, 1.2);
+        light.position.set(10, 10, 20);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x666666));
 
-        const blueLight = new THREE.SpotLight(0x3366ff, 2.0);
-        blueLight.position.set(-20, 0, 10);
-        scene.add(blueLight);
-
-        // 初始化容器
         cntGroup = new THREE.Group();
         scene.add(cntGroup);
 
-        // --- 建立 InstancedMesh (效能核心) ---
-        // 1. 原子 (球體)
-        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); // 降低細節優化效能
-        const atomMat = new THREE.MeshPhongMaterial({ color: 0x555555, shininess: 100 });
+        // --- 視覺設定：球棍模型 (Ball and Stick) ---
+        
+        // 1. 原子：小球
+        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); // 半徑 0.35
+        const atomMat = new THREE.MeshPhongMaterial({ color: 0x999999, shininess: 100 });
         atomMesh = new THREE.InstancedMesh(atomGeo, atomMat, MAX_ATOMS);
-        atomMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         cntGroup.add(atomMesh);
 
-        // 2. 化學鍵 (圓柱)
-        const bondGeo = new THREE.CylinderGeometry(0.08, 0.08, 1, 6);
-        bondGeo.translate(0, 0.5, 0); // 將軸心移到底部，方便縮放旋轉
-        bondGeo.rotateX(Math.PI / 2); // 轉向讓 Z 軸為長度方向 (個人習慣，也可不轉)
-        const bondMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
-        // 每個原子最多3個鍵，估計數量
+        // 2. 鍵結：細棍
+        const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 8); // 半徑 0.1
+        bondGeo.translate(0, 0.5, 0); 
+        bondGeo.rotateX(Math.PI / 2); // 轉向讓 Z 軸為長度方向
+        const bondMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
         bondMesh = new THREE.InstancedMesh(bondGeo, bondMat, MAX_ATOMS * 1.5);
-        bondMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         cntGroup.add(bondMesh);
 
         window.addEventListener('resize', () => {
@@ -247,175 +144,53 @@
         });
     }
 
-    // --- UI 邏輯 ---
-    function updateTypeUI() {
-        const type = document.getElementById('type-select').value;
-        const nInput = document.getElementById('n-input');
-        const mInput = document.getElementById('m-input');
-
-        if (type === 'armchair') {
-            mInput.value = nInput.value;
-            mInput.disabled = true;
-        } else if (type === 'zigzag') {
-            mInput.value = 0;
-            mInput.disabled = true;
-        } else {
-            mInput.disabled = false;
-        }
-        onParamChange();
-    }
-
-    function onParamChange() {
-        const type = document.getElementById('type-select').value;
-        let n = parseInt(document.getElementById('n-input').value);
-        let m = parseInt(document.getElementById('m-input').value);
-        const len = parseInt(document.getElementById('len-slider').value);
-
-        // 邏輯修正
-        if (type === 'armchair') {
-            m = n;
-            document.getElementById('m-input').value = n;
-        } else if (type === 'zigzag') {
-            m = 0; 
-        }
-
-        document.getElementById('len-val').innerText = len;
-        
-        // 呼叫核心生成函數
-        generateCNT(n, m, len);
-    }
-
-    // --- 核心數學：奈米碳管生成器 ---
+    // --- 奈米碳管生成 (修復鍵結斷裂問題) ---
     function generateCNT(n, m, lengthAngstrom) {
-        // 1. 計算基本參數
-        // 手性向量 Ch = n*a1 + m*a2
-        // a1 = (3/2, sqrt(3)/2) * acc
-        // a2 = (3/2, -sqrt(3)/2) * acc
-        
-        // 周長 L = a * sqrt(n^2 + m^2 + nm) where a = sqrt(3)*acc
         const a = Math.sqrt(3) * ACC;
         const circumference = a * Math.sqrt(n*n + m*m + n*m);
         const diameter = circumference / Math.PI;
         
-        // 手性角
-        let chiralAngle = Math.atan((Math.sqrt(3)*m) / (2*n + m)) * (180/Math.PI);
-
-        // 更新 UI 資訊
-        document.getElementById('info-d').innerText = diameter.toFixed(2);
-        document.getElementById('info-theta').innerText = chiralAngle.toFixed(1);
-
-        // 2. 生成平面石墨烯點陣 (在捲曲之前)
-        // 為了確保覆蓋足夠的長度，我們需要在 2D 平面上生成一塊足夠大的區域
-        // 然後進行裁切與捲曲
-        
-        const atoms = [];
-        
-        // 定義基向量 (Cartesian coordinates)
-        const a1x = (3/2) * ACC;
-        const a1y = (Math.sqrt(3)/2) * ACC;
-        const a2x = (3/2) * ACC;
-        const a2y = -(Math.sqrt(3)/2) * ACC;
-
-        // 手性向量 C (這是捲起來後的圓周方向)
-        const Cx = n * a1x + m * a2x;
-        const Cy = n * a1y + m * a2y;
-        
-        // 管軸向量 T (垂直於 C)
-        // Tx*Cx + Ty*Cy = 0 => Tx = -Cy, Ty = Cx (然後標準化)
+        // 晶格常數與向量
+        const a1x = 1.5 * ACC, a1y = (Math.sqrt(3)/2) * ACC;
+        const a2x = 1.5 * ACC, a2y = -(Math.sqrt(3)/2) * ACC;
+        const Cx = n * a1x + m * a2x, Cy = n * a1y + m * a2y;
         const Clen = Math.sqrt(Cx*Cx + Cy*Cy);
-        const ux = Cx / Clen; // 圓周方向單位向量
-        const uy = Cy / Clen;
-        
-        const vx = -uy; // 軸向單位向量
-        const vy = ux;
+        const ux = Cx / Clen, uy = Cy / Clen; // 圓周方向
+        const vx = -uy, vy = ux; // 軸向
 
-        // 掃描範圍估算
-        // 我們需要在 u 軸 [0, Circumference] 和 v 軸 [0, Length] 範圍內找點
-        // 簡單暴力法：產生一個夠大的矩形網格，然後投影檢查
-        
-        const iMax = Math.ceil((lengthAngstrom + circumference) / ACC) + 2;
-        
-        // 暫存矩陣
+        const atoms = [];
         const dummy = new THREE.Object3D();
-
         let atomCount = 0;
         
-        // 清空之前的 InstancedMesh
-        // (InstancedMesh 不能真正清空，只能把 count 設為 0 或把物件移到無限遠，這裡我們重設 count)
-        
+        // 擴大掃描範圍以確保邊緣完整
+        const iMax = Math.ceil((lengthAngstrom + circumference)/ACC) + 3;
+
         for (let i = -iMax; i < iMax; i++) {
             for (let j = -iMax; j < iMax; j++) {
-                // 石墨烯有兩個基底原子 (0,0) 和 (1/3, 1/3) -> 簡化為 (ACC, 0) 相對位移? 
-                // 不，標準基底是: Basis 1 at (0,0), Basis 2 at (a1+a2)/3 = (acc, 0)
-                
-                // Basis 1
-                let px = i * a1x + j * a2x;
-                let py = i * a1y + j * a2y;
-                processAtom(px, py);
-
-                // Basis 2 (位於 (acc, 0) 相對於晶格點? 實際上是 (a1+a2)/3 )
-                // (a1+a2)/3 = (3*acc, 0)/3 = (acc, 0)
-                processAtom(px + ACC, py);
+                // 兩個基底原子
+                processAtom(i * a1x + j * a2x, i * a1y + j * a2y);
+                processAtom(i * a1x + j * a2x + ACC, i * a1y + j * a2y);
             }
         }
 
         function processAtom(x, y) {
-            // 投影到 u (圓周) 和 v (軸向)
-            const u = x * ux + y * uy;
-            const v = x * vx + y * vy;
+            const u = x * ux + y * uy; // 圓周投影
+            const v = x * vx + y * vy; // 軸向投影
 
-            // 裁切條件
-            // u 必須在 [0, Circumference)
-            // v 必須在 [0, Length]
-            // 注意：為了避免浮點數誤差導致邊界重疊原子，加上一個極小的 epsilon
-            const eps = 0.01;
-            
+            // 裁切
             if (v >= 0 && v < lengthAngstrom) {
-                // 處理 u 的週期性
-                // 這裡我們只取一個週期內的點
-                // 由於網格可能旋轉，u 可能很負或很大，我們用 modulo
-                
-                let u_mapped = u % circumference;
-                if (u_mapped < 0) u_mapped += circumference;
-
-                // 這裡的邏輯是：我們只生成"一片"捲起來
-                // 但簡單的做法是檢查原始座標是否落在 "主要條帶" 內
-                // 比較簡單的算法：
-                // 檢查 u 是否在 [0, circumference) 區間 (允許一點誤差容忍縫合)
-                // 這裡如果用 % 運算，會把整個無限平面捲進來。
-                // 正確做法：我們只選取在特定的兩條平行線之間的原子。
-                
-                // 為了視覺簡單，我們直接檢查 u
-                // 但要確保不會重複生成 (i,j) 組合。
-                // 上面的 loop 是掃描 (i,j)，每個點只會被處理一次。
-                // 所以我們只要判斷 u_mapped 後的位置即可?
-                // 不行，因為 (i,j) 不同但空間位置可能重疊(不可能，這是晶格)。
-                // 關鍵是：我們只想要 "一圈"。
-                // 所以我們不應該用 modulo，而是檢查原始投影 u 是否在 [0, Circumference)
-                
-                if (u > -eps && u < circumference - eps) {
-                    // 3D 映射
-                    // x3d = R * cos(theta)
-                    // y3d = R * sin(theta)
-                    // z3d = v
+                if (u > -0.01 && u < circumference - 0.01) {
+                    // 3D 捲曲
                     const theta = (u / circumference) * Math.PI * 2;
                     const R = diameter / 2;
-                    
-                    const x3d = R * Math.cos(theta);
-                    const y3d = R * Math.sin(theta); // 修正軸向，讓管子沿 Z 軸或是 Y 軸? 原本代碼是自由旋轉。
-                    // 為了配合視覺，我們讓管子沿 Y 軸 (直立) 比較好看，或者 X 軸 (橫躺)
-                    // 這裡設定：管軸 = X 軸
-                    
-                    const finalX = v - lengthAngstrom/2; // 置中
-                    const finalY = R * Math.cos(theta);
-                    const finalZ = R * Math.sin(theta);
+                    const x3d = v - lengthAngstrom/2; // 沿 X 軸長
+                    const y3d = R * Math.cos(theta);
+                    const z3d = R * Math.sin(theta);
 
-                    // 儲存原子位置與索引，用於建鍵
-                    atoms.push({ x: finalX, y: finalY, z: finalZ });
+                    atoms.push({ x: x3d, y: y3d, z: z3d });
 
-                    // 設定 Instance
                     if (atomCount < MAX_ATOMS) {
-                        dummy.position.set(finalX, finalY, finalZ);
+                        dummy.position.set(x3d, y3d, z3d);
                         dummy.scale.set(1, 1, 1);
                         dummy.rotation.set(0, 0, 0);
                         dummy.updateMatrix();
@@ -425,49 +200,32 @@
                 }
             }
         }
-
         atomMesh.count = atomCount;
         atomMesh.instanceMatrix.needsUpdate = true;
 
-        // 3. 生成化學鍵 (基於 3D 距離)
-        // 這是最穩健的方法，可以自動處理捲曲處的縫合
+        // 生成鍵結 - 關鍵修正：增加判定距離
         let bondCount = 0;
-        const bondLimit = 1.6; // 稍微大於 1.42 以容許誤差
-        const bondLimitSq = bondLimit * bondLimit;
+        // C-C 是 1.42，原本設 1.6 可能在捲曲時因為弦長變短而被忽略
+        // 設為 1.9 非常安全，因為下一個最近鄰居是 2.46 (sqrt(3)*acc)
+        const bondLimitSq = 1.9 * 1.9; 
 
         for (let i = 0; i < atoms.length; i++) {
-            const p1 = atoms[i];
-            // 只檢查 j > i 避免重複
-            // 為了效能，可以只檢查附近的 index，但這裡 N 不大，直接掃描沒問題
-            // 優化：只檢查後面的 100 個原子? 不行，捲曲處索引差很大。
-            // 2000個原子 N^2 = 400萬次計算，JS 跑得動 (約 10-20ms)
-            
             for (let j = i + 1; j < atoms.length; j++) {
-                const p2 = atoms[j];
-                const dx = p1.x - p2.x;
-                const dy = p1.y - p2.y;
-                const dz = p1.z - p2.z;
+                const dx = atoms[i].x - atoms[j].x;
+                const dy = atoms[i].y - atoms[j].y;
+                const dz = atoms[i].z - atoms[j].z;
                 const distSq = dx*dx + dy*dy + dz*dz;
 
                 if (distSq < bondLimitSq) {
-                    // 建立鍵結
                     if (bondCount < MAX_ATOMS * 1.5) {
                         const dist = Math.sqrt(distSq);
-                        const midX = (p1.x + p2.x) / 2;
-                        const midY = (p1.y + p2.y) / 2;
-                        const midZ = (p1.z + p2.z) / 2;
+                        const midX = (atoms[i].x + atoms[j].x) / 2;
+                        const midY = (atoms[i].y + atoms[j].y) / 2;
+                        const midZ = (atoms[i].z + atoms[j].z) / 2;
 
                         dummy.position.set(midX, midY, midZ);
-                        
-                        // 計算旋轉 (Quaternion) 使圓柱對齊兩點
-                        // 預設圓柱是朝上的 (0,1,0) (因為我們上面 geometry rotateX 處理過，這裡假設原始向 Y)
-                        // 修正：我們上面 geometry 已經 rotateX(PI/2) 讓它變 Z 軸向
-                        // 所以我們用 lookAt 邏輯
-                        
-                        dummy.lookAt(p2.x, p2.y, p2.z); 
-                        // lookAt 讓 Z 軸指向目標，這剛好配合我們轉過的 Geometry
-                        
-                        dummy.scale.set(1, 1, dist); // 拉長 Z 軸
+                        dummy.lookAt(atoms[j].x, atoms[j].y, atoms[j].z);
+                        dummy.scale.set(1, 1, dist);
                         dummy.updateMatrix();
                         
                         bondMesh.setMatrixAt(bondCount, dummy.matrix);
@@ -480,93 +238,128 @@
         bondMesh.instanceMatrix.needsUpdate = true;
     }
 
-
-    // --- MediaPipe 邏輯 (保留原樣) ---
-    const videoElement = document.getElementById('input_video');
-    const statusIndicator = document.getElementById('status-indicator');
-
+    // --- MediaPipe 手勢邏輯 ---
+    const msgDiv = document.getElementById('teacher-msg');
+    
     function onResults(results) {
+        let isVictory = false;
+
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             const landmarks = results.multiHandLandmarks[0];
             const wrist = landmarks[0];
-            const middleTip = landmarks[12];
             const thumbTip = landmarks[4];
             const indexTip = landmarks[8];
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
             const handCenter = landmarks[9];
 
-            const palmLen = Math.sqrt(Math.pow(middleTip.x - wrist.x, 2) + Math.pow(middleTip.y - wrist.y, 2));
-            const isFist = palmLen < 0.15;
+            // 計算指尖到手腕距離
+            const dIndex = dist(indexTip, wrist);
+            const dMiddle = dist(middleTip, wrist);
+            const dRing = dist(ringTip, wrist);
+            const dPinky = dist(pinkyTip, wrist);
+            const dThumb = dist(thumbTip, wrist); // 拇指比較短，判定要寬鬆
 
-            if (isFist) {
-                statusIndicator.classList.add('visible');
-                lastHandX = handCenter.x;
-                lastHandY = handCenter.y;
-                lastPinchDist = null;
+            // --- 手勢判定 ---
+
+            // 1. 握拳 (Fist): 四指都靠近手心
+            // 閾值視手掌大小而定，0.15~0.2 左右
+            const isFist = (dIndex < 0.25 && dMiddle < 0.25 && dRing < 0.25 && dPinky < 0.25);
+
+            // 2. 五指張開 (Open): 四指都遠離
+            const isOpen = (dIndex > 0.3 && dMiddle > 0.3 && dRing > 0.3 && dPinky > 0.3);
+
+            // 3. 勝利手勢 (Victory): 食指中指伸直，無名指小指彎曲
+            // 條件：食指中指遠，無名小指近
+            isVictory = (dIndex > 0.3 && dMiddle > 0.3 && dRing < 0.25 && dPinky < 0.25);
+
+            // --- 觸發功能 ---
+
+            if (isVictory) {
+                // ✌️ 顯示特效
+                msgDiv.classList.add('show');
             } else {
-                statusIndicator.classList.remove('visible');
-                if (lastHandX !== null && lastHandY !== null) {
-                    const deltaX = handCenter.x - lastHandX;
-                    const deltaY = handCenter.y - lastHandY;
-                    const rotSensitivity = 4.0;
-                    currentRotationY += deltaX * rotSensitivity;
-                    currentRotationX += deltaY * rotSensitivity;
+                msgDiv.classList.remove('show');
+                
+                // 縮放邏輯
+                if (isFist) {
+                    currentScale -= 0.03; // ✊ 縮小
+                } else if (isOpen) {
+                    currentScale += 0.03; // 🖐️ 放大
                 }
-                lastHandX = handCenter.x;
-                lastHandY = handCenter.y;
-
-                const pinchDist = Math.sqrt(Math.pow(thumbTip.x - indexTip.x, 2) + Math.pow(thumbTip.y - indexTip.y, 2));
-                if (lastPinchDist !== null) {
-                    const deltaPinch = pinchDist - lastPinchDist;
-                    currentScale += deltaPinch * 3.5;
-                    currentScale = Math.max(0.1, Math.min(currentScale, 8.0));
-                }
-                lastPinchDist = pinchDist;
+                // 限制範圍
+                currentScale = Math.max(0.2, Math.min(currentScale, 6.0));
             }
+
+            // 旋轉邏輯 (只要手在動，就跟著轉)
+            if (lastHandX !== null && lastHandY !== null && !isVictory) {
+                const deltaX = handCenter.x - lastHandX;
+                const deltaY = handCenter.y - lastHandY;
+                const sensitivity = 5.0;
+                currentRotationY += deltaX * sensitivity;
+                currentRotationX += deltaY * sensitivity;
+            }
+
+            lastHandX = handCenter.x;
+            lastHandY = handCenter.y;
+
         } else {
             lastHandX = null;
-            lastHandY = null;
-            lastPinchDist = null;
-            statusIndicator.classList.remove('visible');
+            msgDiv.classList.remove('show');
         }
     }
+    
+    function dist(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    }
 
+    // --- UI 連動 ---
+    function updateTypeUI() {
+        const type = document.getElementById('type-select').value;
+        const nInput = document.getElementById('n-input');
+        const mInput = document.getElementById('m-input');
+        if (type === 'armchair') { mInput.value = nInput.value; mInput.disabled = true; }
+        else if (type === 'zigzag') { mInput.value = 0; mInput.disabled = true; }
+        else { mInput.disabled = false; }
+        onParamChange();
+    }
+
+    function onParamChange() {
+        const type = document.getElementById('type-select').value;
+        let n = parseInt(document.getElementById('n-input').value);
+        let m = parseInt(document.getElementById('m-input').value);
+        const len = parseInt(document.getElementById('len-slider').value);
+        if (type === 'armchair') { m = n; document.getElementById('m-input').value = n; }
+        else if (type === 'zigzag') { m = 0; }
+        generateCNT(n, m, len);
+    }
+
+    // --- 啟動 ---
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({
-        maxNumHands: 1,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.6,
-        minTrackingConfidence: 0.6
-    });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
     hands.onResults(onResults);
 
-    const cameraUtils = new Camera(videoElement, {
-        onFrame: async () => { await hands.send({image: videoElement}); },
+    const cameraUtils = new Camera(document.getElementById('input_video'), {
+        onFrame: async () => { await hands.send({image: document.getElementById('input_video')}); },
         width: 640, height: 480
     });
     cameraUtils.start();
 
-    // --- 渲染迴圈 ---
+    initThree();
+    updateTypeUI();
+
     function animate() {
         requestAnimationFrame(animate);
-
         if (cntGroup) {
-            // 平滑插值
             cntGroup.rotation.y += (currentRotationY - cntGroup.rotation.y) * 0.1;
             cntGroup.rotation.x += (currentRotationX - cntGroup.rotation.x) * 0.1;
-            
             const s = cntGroup.scale.x;
-            const newS = s + (currentScale - s) * 0.15;
-            cntGroup.scale.set(newS, newS, newS);
+            cntGroup.scale.set(s + (currentScale - s) * 0.1, s + (currentScale - s) * 0.1, s + (currentScale - s) * 0.1);
         }
         renderer.render(scene, camera);
     }
-
-    // 啟動
-    initThree();
-    // 預設生成 5,5 長度 20
-    updateTypeUI(); 
     animate();
-
 </script>
 </body>
 </html>
