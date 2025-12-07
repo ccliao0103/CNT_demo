@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>©`¦ÌºÒºŞ¤â¶Õ¼ÒÀÀ¾¹ (Three.js + MediaPipe)</title>
+    <title>å¥ˆç±³ç¢³ç®¡æ‰‹å‹¢æ¨¡æ“¬å™¨ (Three.js + MediaPipe)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -29,7 +29,7 @@
             z-index: 1;
         }
 
-        /* ±±¨î­±ªO */
+        /* æ§åˆ¶é¢æ¿ */
         #ui-panel {
             position: absolute;
             top: 10px;
@@ -76,7 +76,7 @@
         select { flex: 1; }
         input[type="number"] { width: 50px; }
 
-        /* ·Æ±ì¼Ë¦¡ */
+        /* æ»‘æ¡¿æ¨£å¼ */
         input[type="range"] {
             width: 100%;
             height: 4px;
@@ -104,7 +104,7 @@
         }
         .info-value { color: #2196F3; font-weight: bold; }
 
-        /* ÁôÂÃÄá¼v¾÷ */
+        /* éš±è—æ”å½±æ©Ÿ */
         .input_video {
             position: absolute !important;
             visibility: hidden !important;
@@ -113,10 +113,10 @@
             opacity: 0;
         }
         
-        /* ª¬ºA«ü¥Ü¾¹ */
+        /* ç‹€æ…‹æŒ‡ç¤ºå™¨ */
         #status-indicator {
             position: absolute;
-            top: 180px; /* ²¾¨ì­±ªO¤U¤è */
+            top: 180px; /* ç§»åˆ°é¢æ¿ä¸‹æ–¹ */
             left: 50%;
             transform: translateX(-50%);
             padding: 6px 16px;
@@ -140,7 +140,7 @@
 
     <div id="ui-panel">
         <div class="control-row">
-            <label>±²ªk Type</label>
+            <label>æ²æ³• Type</label>
             <select id="type-select" onchange="updateTypeUI()">
                 <option value="armchair" selected>Armchair (n, n)</option>
                 <option value="zigzag">Zigzag (n, 0)</option>
@@ -157,56 +157,56 @@
 
         <div class="control-row" style="flex-direction: column; align-items: stretch; gap: 5px;">
             <div style="display:flex; justify-content:space-between;">
-                <label>ºŞªø Length (A)</label>
+                <label>ç®¡é•· Length (A)</label>
                 <span id="len-val" style="font-size:12px; color:#ddd;">20</span>
             </div>
             <input type="range" id="len-slider" min="10" max="100" value="20" step="5" oninput="onParamChange()">
         </div>
 
         <div class="info-display">
-            <span>ª½®|: <span id="info-d" class="info-value">--</span> A</span>
-            <span>¨¤«×: <span id="info-theta" class="info-value">--</span>¢X</span>
+            <span>ç›´å¾‘: <span id="info-d" class="info-value">--</span> A</span>
+            <span>è§’åº¦: <span id="info-theta" class="info-value">--</span>Â°</span>
         </div>
     </div>
 
     <div id="status-indicator">
-        <span>? ´¤®±¼È°± / ­«¸m¦ì¸m</span>
+        <span>? æ¡æ‹³æš«åœ / é‡ç½®ä½ç½®</span>
     </div>
 
     <div id="canvas-container"></div>
     <video id="input_video" class="input_video" playsinline></video>
 
 <script>
-    // --- ÅÜ¼Æ ---
+    // --- è®Šæ•¸ ---
     let scene, camera, renderer;
-    let atomMesh, bondMesh; // InstancedMesh ª«¥ó
-    let cntGroup; // ¥]§t©Ò¦³ InstancedMesh ªº¸s²Õ
+    let atomMesh, bondMesh; // InstancedMesh ç‰©ä»¶
+    let cntGroup; // åŒ…å«æ‰€æœ‰ InstancedMesh çš„ç¾¤çµ„
 
-    // ±±¨îÅÜ¼Æ
+    // æ§åˆ¶è®Šæ•¸
     let currentRotationX = 0;
     let currentRotationY = 0;
     let currentScale = 1;
     let lastHandX = null, lastHandY = null, lastPinchDist = null;
 
-    // ª«²z±`¼Æ
-    const ACC = 1.42; // C-C Áäªø (Angstrom)
-    const MAX_ATOMS = 5000; // ¹w¯dªº³Ì¤j­ì¤l¼Æ½w½Ä°Ï
+    // ç‰©ç†å¸¸æ•¸
+    const ACC = 1.42; // C-C éµé•· (Angstrom)
+    const MAX_ATOMS = 5000; // é ç•™çš„æœ€å¤§åŸå­æ•¸ç·©è¡å€
 
-    // --- Three.js ªì©l¤Æ ---
+    // --- Three.js åˆå§‹åŒ– ---
     function initThree() {
         const container = document.getElementById('canvas-container');
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050505);
 
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 30; // µy·L©Ô»·¥H®e¯ÇªøºŞ
+        camera.position.z = 30; // ç¨å¾®æ‹‰é ä»¥å®¹ç´é•·ç®¡
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // ¿O¥ú
+        // ç‡ˆå…‰
         const ambientLight = new THREE.AmbientLight(0x555555, 1.5);
         scene.add(ambientLight);
         
@@ -218,24 +218,24 @@
         blueLight.position.set(-20, 0, 10);
         scene.add(blueLight);
 
-        // ªì©l¤Æ®e¾¹
+        // åˆå§‹åŒ–å®¹å™¨
         cntGroup = new THREE.Group();
         scene.add(cntGroup);
 
-        // --- «Ø¥ß InstancedMesh (®Ä¯à®Ö¤ß) ---
-        // 1. ­ì¤l (²yÅé)
-        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); // ­°§C²Ó¸`Àu¤Æ®Ä¯à
+        // --- å»ºç«‹ InstancedMesh (æ•ˆèƒ½æ ¸å¿ƒ) ---
+        // 1. åŸå­ (çƒé«”)
+        const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); // é™ä½ç´°ç¯€å„ªåŒ–æ•ˆèƒ½
         const atomMat = new THREE.MeshPhongMaterial({ color: 0x555555, shininess: 100 });
         atomMesh = new THREE.InstancedMesh(atomGeo, atomMat, MAX_ATOMS);
         atomMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         cntGroup.add(atomMesh);
 
-        // 2. ¤Æ¾ÇÁä (¶ê¬W)
+        // 2. åŒ–å­¸éµ (åœ“æŸ±)
         const bondGeo = new THREE.CylinderGeometry(0.08, 0.08, 1, 6);
-        bondGeo.translate(0, 0.5, 0); // ±N¶b¤ß²¾¨ì©³³¡¡A¤è«KÁY©ñ±ÛÂà
-        bondGeo.rotateX(Math.PI / 2); // Âà¦VÅı Z ¶b¬°ªø«×¤è¦V (­Ó¤H²ßºD¡A¤]¥i¤£Âà)
+        bondGeo.translate(0, 0.5, 0); // å°‡è»¸å¿ƒç§»åˆ°åº•éƒ¨ï¼Œæ–¹ä¾¿ç¸®æ”¾æ—‹è½‰
+        bondGeo.rotateX(Math.PI / 2); // è½‰å‘è®“ Z è»¸ç‚ºé•·åº¦æ–¹å‘ (å€‹äººç¿’æ…£ï¼Œä¹Ÿå¯ä¸è½‰)
         const bondMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
-        // ¨C­Ó­ì¤l³Ì¦h3­ÓÁä¡A¦ô­p¼Æ¶q
+        // æ¯å€‹åŸå­æœ€å¤š3å€‹éµï¼Œä¼°è¨ˆæ•¸é‡
         bondMesh = new THREE.InstancedMesh(bondGeo, bondMat, MAX_ATOMS * 1.5);
         bondMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         cntGroup.add(bondMesh);
@@ -247,7 +247,7 @@
         });
     }
 
-    // --- UI ÅŞ¿è ---
+    // --- UI é‚è¼¯ ---
     function updateTypeUI() {
         const type = document.getElementById('type-select').value;
         const nInput = document.getElementById('n-input');
@@ -271,7 +271,7 @@
         let m = parseInt(document.getElementById('m-input').value);
         const len = parseInt(document.getElementById('len-slider').value);
 
-        // ÅŞ¿è­×¥¿
+        // é‚è¼¯ä¿®æ­£
         if (type === 'armchair') {
             m = n;
             document.getElementById('m-input').value = n;
@@ -281,120 +281,120 @@
 
         document.getElementById('len-val').innerText = len;
         
-        // ©I¥s®Ö¤ß¥Í¦¨¨ç¼Æ
+        // å‘¼å«æ ¸å¿ƒç”Ÿæˆå‡½æ•¸
         generateCNT(n, m, len);
     }
 
-    // --- ®Ö¤ß¼Æ¾Ç¡G©`¦ÌºÒºŞ¥Í¦¨¾¹ ---
+    // --- æ ¸å¿ƒæ•¸å­¸ï¼šå¥ˆç±³ç¢³ç®¡ç”Ÿæˆå™¨ ---
     function generateCNT(n, m, lengthAngstrom) {
-        // 1. ­pºâ°ò¥»°Ñ¼Æ
-        // ¤â©Ê¦V¶q Ch = n*a1 + m*a2
+        // 1. è¨ˆç®—åŸºæœ¬åƒæ•¸
+        // æ‰‹æ€§å‘é‡ Ch = n*a1 + m*a2
         // a1 = (3/2, sqrt(3)/2) * acc
         // a2 = (3/2, -sqrt(3)/2) * acc
         
-        // ©Pªø L = a * sqrt(n^2 + m^2 + nm) where a = sqrt(3)*acc
+        // å‘¨é•· L = a * sqrt(n^2 + m^2 + nm) where a = sqrt(3)*acc
         const a = Math.sqrt(3) * ACC;
         const circumference = a * Math.sqrt(n*n + m*m + n*m);
         const diameter = circumference / Math.PI;
         
-        // ¤â©Ê¨¤
+        // æ‰‹æ€§è§’
         let chiralAngle = Math.atan((Math.sqrt(3)*m) / (2*n + m)) * (180/Math.PI);
 
-        // §ó·s UI ¸ê°T
+        // æ›´æ–° UI è³‡è¨Š
         document.getElementById('info-d').innerText = diameter.toFixed(2);
         document.getElementById('info-theta').innerText = chiralAngle.toFixed(1);
 
-        // 2. ¥Í¦¨¥­­±¥Û¾¥²mÂI°} (¦b±²¦±¤§«e)
-        // ¬°¤F½T«OÂĞ»\¨¬°÷ªºªø«×¡A§Ú­Ì»İ­n¦b 2D ¥­­±¤W¥Í¦¨¤@¶ô¨¬°÷¤jªº°Ï°ì
-        // µM«á¶i¦æµô¤Á»P±²¦±
+        // 2. ç”Ÿæˆå¹³é¢çŸ³å¢¨çƒ¯é»é™£ (åœ¨æ²æ›²ä¹‹å‰)
+        // ç‚ºäº†ç¢ºä¿è¦†è“‹è¶³å¤ çš„é•·åº¦ï¼Œæˆ‘å€‘éœ€è¦åœ¨ 2D å¹³é¢ä¸Šç”Ÿæˆä¸€å¡Šè¶³å¤ å¤§çš„å€åŸŸ
+        // ç„¶å¾Œé€²è¡Œè£åˆ‡èˆ‡æ²æ›²
         
         const atoms = [];
         
-        // ©w¸q°ò¦V¶q (Cartesian coordinates)
+        // å®šç¾©åŸºå‘é‡ (Cartesian coordinates)
         const a1x = (3/2) * ACC;
         const a1y = (Math.sqrt(3)/2) * ACC;
         const a2x = (3/2) * ACC;
         const a2y = -(Math.sqrt(3)/2) * ACC;
 
-        // ¤â©Ê¦V¶q C (³o¬O±²°_¨Ó«áªº¶ê©P¤è¦V)
+        // æ‰‹æ€§å‘é‡ C (é€™æ˜¯æ²èµ·ä¾†å¾Œçš„åœ“å‘¨æ–¹å‘)
         const Cx = n * a1x + m * a2x;
         const Cy = n * a1y + m * a2y;
         
-        // ºŞ¶b¦V¶q T (««ª½©ó C)
-        // Tx*Cx + Ty*Cy = 0 => Tx = -Cy, Ty = Cx (µM«á¼Ğ·Ç¤Æ)
+        // ç®¡è»¸å‘é‡ T (å‚ç›´æ–¼ C)
+        // Tx*Cx + Ty*Cy = 0 => Tx = -Cy, Ty = Cx (ç„¶å¾Œæ¨™æº–åŒ–)
         const Clen = Math.sqrt(Cx*Cx + Cy*Cy);
-        const ux = Cx / Clen; // ¶ê©P¤è¦V³æ¦ì¦V¶q
+        const ux = Cx / Clen; // åœ“å‘¨æ–¹å‘å–®ä½å‘é‡
         const uy = Cy / Clen;
         
-        const vx = -uy; // ¶b¦V³æ¦ì¦V¶q
+        const vx = -uy; // è»¸å‘å–®ä½å‘é‡
         const vy = ux;
 
-        // ±½´y½d³ò¦ôºâ
-        // §Ú­Ì»İ­n¦b u ¶b [0, Circumference] ©M v ¶b [0, Length] ½d³ò¤º§äÂI
-        // Â²³æ¼É¤Oªk¡G²£¥Í¤@­Ó°÷¤jªº¯x§Îºô®æ¡AµM«á§ë¼vÀË¬d
+        // æƒæç¯„åœä¼°ç®—
+        // æˆ‘å€‘éœ€è¦åœ¨ u è»¸ [0, Circumference] å’Œ v è»¸ [0, Length] ç¯„åœå…§æ‰¾é»
+        // ç°¡å–®æš´åŠ›æ³•ï¼šç”¢ç”Ÿä¸€å€‹å¤ å¤§çš„çŸ©å½¢ç¶²æ ¼ï¼Œç„¶å¾ŒæŠ•å½±æª¢æŸ¥
         
         const iMax = Math.ceil((lengthAngstrom + circumference) / ACC) + 2;
         
-        // ¼È¦s¯x°}
+        // æš«å­˜çŸ©é™£
         const dummy = new THREE.Object3D();
 
         let atomCount = 0;
         
-        // ²MªÅ¤§«eªº InstancedMesh
-        // (InstancedMesh ¤£¯à¯u¥¿²MªÅ¡A¥u¯à§â count ³]¬° 0 ©Î§âª«¥ó²¾¨ìµL­­»·¡A³o¸Ì§Ú­Ì­«³] count)
+        // æ¸…ç©ºä¹‹å‰çš„ InstancedMesh
+        // (InstancedMesh ä¸èƒ½çœŸæ­£æ¸…ç©ºï¼Œåªèƒ½æŠŠ count è¨­ç‚º 0 æˆ–æŠŠç‰©ä»¶ç§»åˆ°ç„¡é™é ï¼Œé€™è£¡æˆ‘å€‘é‡è¨­ count)
         
         for (let i = -iMax; i < iMax; i++) {
             for (let j = -iMax; j < iMax; j++) {
-                // ¥Û¾¥²m¦³¨â­Ó°ò©³­ì¤l (0,0) ©M (1/3, 1/3) -> Â²¤Æ¬° (ACC, 0) ¬Û¹ï¦ì²¾? 
-                // ¤£¡A¼Ğ·Ç°ò©³¬O: Basis 1 at (0,0), Basis 2 at (a1+a2)/3 = (acc, 0)
+                // çŸ³å¢¨çƒ¯æœ‰å…©å€‹åŸºåº•åŸå­ (0,0) å’Œ (1/3, 1/3) -> ç°¡åŒ–ç‚º (ACC, 0) ç›¸å°ä½ç§»? 
+                // ä¸ï¼Œæ¨™æº–åŸºåº•æ˜¯: Basis 1 at (0,0), Basis 2 at (a1+a2)/3 = (acc, 0)
                 
                 // Basis 1
                 let px = i * a1x + j * a2x;
                 let py = i * a1y + j * a2y;
                 processAtom(px, py);
 
-                // Basis 2 (¦ì©ó (acc, 0) ¬Û¹ï©ó´¹®æÂI? ¹ê»Ú¤W¬O (a1+a2)/3 )
+                // Basis 2 (ä½æ–¼ (acc, 0) ç›¸å°æ–¼æ™¶æ ¼é»? å¯¦éš›ä¸Šæ˜¯ (a1+a2)/3 )
                 // (a1+a2)/3 = (3*acc, 0)/3 = (acc, 0)
                 processAtom(px + ACC, py);
             }
         }
 
         function processAtom(x, y) {
-            // §ë¼v¨ì u (¶ê©P) ©M v (¶b¦V)
+            // æŠ•å½±åˆ° u (åœ“å‘¨) å’Œ v (è»¸å‘)
             const u = x * ux + y * uy;
             const v = x * vx + y * vy;
 
-            // µô¤Á±ø¥ó
-            // u ¥²¶·¦b [0, Circumference)
-            // v ¥²¶·¦b [0, Length]
-            // ª`·N¡G¬°¤FÁ×§K¯BÂI¼Æ»~®t¾É­PÃä¬É­«Å|­ì¤l¡A¥[¤W¤@­Ó·¥¤pªº epsilon
+            // è£åˆ‡æ¢ä»¶
+            // u å¿…é ˆåœ¨ [0, Circumference)
+            // v å¿…é ˆåœ¨ [0, Length]
+            // æ³¨æ„ï¼šç‚ºäº†é¿å…æµ®é»æ•¸èª¤å·®å°è‡´é‚Šç•Œé‡ç–ŠåŸå­ï¼ŒåŠ ä¸Šä¸€å€‹æ¥µå°çš„ epsilon
             const eps = 0.01;
             
             if (v >= 0 && v < lengthAngstrom) {
-                // ³B²z u ªº¶g´Á©Ê
-                // ³o¸Ì§Ú­Ì¥u¨ú¤@­Ó¶g´Á¤ºªºÂI
-                // ¥Ñ©óºô®æ¥i¯à±ÛÂà¡Au ¥i¯à«Ü­t©Î«Ü¤j¡A§Ú­Ì¥Î modulo
+                // è™•ç† u çš„é€±æœŸæ€§
+                // é€™è£¡æˆ‘å€‘åªå–ä¸€å€‹é€±æœŸå…§çš„é»
+                // ç”±æ–¼ç¶²æ ¼å¯èƒ½æ—‹è½‰ï¼Œu å¯èƒ½å¾ˆè² æˆ–å¾ˆå¤§ï¼Œæˆ‘å€‘ç”¨ modulo
                 
                 let u_mapped = u % circumference;
                 if (u_mapped < 0) u_mapped += circumference;
 
-                // ³o¸ÌªºÅŞ¿è¬O¡G§Ú­Ì¥u¥Í¦¨"¤@¤ù"±²°_¨Ó
-                // ¦ıÂ²³æªº°µªk¬OÀË¬d­ì©l®y¼Ğ¬O§_¸¨¦b "¥D­n±ø±a" ¤º
-                // ¤ñ¸ûÂ²³æªººâªk¡G
-                // ÀË¬d u ¬O§_¦b [0, circumference) °Ï¶¡ (¤¹³\¤@ÂI»~®t®e§ÔÁ_¦X)
-                // ³o¸Ì¦pªG¥Î % ¹Bºâ¡A·|§â¾ã­ÓµL­­¥­­±±²¶i¨Ó¡C
-                // ¥¿½T°µªk¡G§Ú­Ì¥u¿ï¨ú¦b¯S©wªº¨â±ø¥­¦æ½u¤§¶¡ªº­ì¤l¡C
+                // é€™è£¡çš„é‚è¼¯æ˜¯ï¼šæˆ‘å€‘åªç”Ÿæˆ"ä¸€ç‰‡"æ²èµ·ä¾†
+                // ä½†ç°¡å–®çš„åšæ³•æ˜¯æª¢æŸ¥åŸå§‹åº§æ¨™æ˜¯å¦è½åœ¨ "ä¸»è¦æ¢å¸¶" å…§
+                // æ¯”è¼ƒç°¡å–®çš„ç®—æ³•ï¼š
+                // æª¢æŸ¥ u æ˜¯å¦åœ¨ [0, circumference) å€é–“ (å…è¨±ä¸€é»èª¤å·®å®¹å¿ç¸«åˆ)
+                // é€™è£¡å¦‚æœç”¨ % é‹ç®—ï¼ŒæœƒæŠŠæ•´å€‹ç„¡é™å¹³é¢æ²é€²ä¾†ã€‚
+                // æ­£ç¢ºåšæ³•ï¼šæˆ‘å€‘åªé¸å–åœ¨ç‰¹å®šçš„å…©æ¢å¹³è¡Œç·šä¹‹é–“çš„åŸå­ã€‚
                 
-                // ¬°¤FµøÄ±Â²³æ¡A§Ú­Ìª½±µÀË¬d u
-                // ¦ı­n½T«O¤£·|­«½Æ¥Í¦¨ (i,j) ²Õ¦X¡C
-                // ¤W­±ªº loop ¬O±½´y (i,j)¡A¨C­ÓÂI¥u·|³Q³B²z¤@¦¸¡C
-                // ©Ò¥H§Ú­Ì¥u­n§PÂ_ u_mapped «áªº¦ì¸m§Y¥i?
-                // ¤£¦æ¡A¦]¬° (i,j) ¤£¦P¦ıªÅ¶¡¦ì¸m¥i¯à­«Å|(¤£¥i¯à¡A³o¬O´¹®æ)¡C
-                // ÃöÁä¬O¡G§Ú­Ì¥u·Q­n "¤@°é"¡C
-                // ©Ò¥H§Ú­Ì¤£À³¸Ó¥Î modulo¡A¦Ó¬OÀË¬d­ì©l§ë¼v u ¬O§_¦b [0, Circumference)
+                // ç‚ºäº†è¦–è¦ºç°¡å–®ï¼Œæˆ‘å€‘ç›´æ¥æª¢æŸ¥ u
+                // ä½†è¦ç¢ºä¿ä¸æœƒé‡è¤‡ç”Ÿæˆ (i,j) çµ„åˆã€‚
+                // ä¸Šé¢çš„ loop æ˜¯æƒæ (i,j)ï¼Œæ¯å€‹é»åªæœƒè¢«è™•ç†ä¸€æ¬¡ã€‚
+                // æ‰€ä»¥æˆ‘å€‘åªè¦åˆ¤æ–· u_mapped å¾Œçš„ä½ç½®å³å¯?
+                // ä¸è¡Œï¼Œå› ç‚º (i,j) ä¸åŒä½†ç©ºé–“ä½ç½®å¯èƒ½é‡ç–Š(ä¸å¯èƒ½ï¼Œé€™æ˜¯æ™¶æ ¼)ã€‚
+                // é—œéµæ˜¯ï¼šæˆ‘å€‘åªæƒ³è¦ "ä¸€åœˆ"ã€‚
+                // æ‰€ä»¥æˆ‘å€‘ä¸æ‡‰è©²ç”¨ moduloï¼Œè€Œæ˜¯æª¢æŸ¥åŸå§‹æŠ•å½± u æ˜¯å¦åœ¨ [0, Circumference)
                 
                 if (u > -eps && u < circumference - eps) {
-                    // 3D ¬M®g
+                    // 3D æ˜ å°„
                     // x3d = R * cos(theta)
                     // y3d = R * sin(theta)
                     // z3d = v
@@ -402,18 +402,18 @@
                     const R = diameter / 2;
                     
                     const x3d = R * Math.cos(theta);
-                    const y3d = R * Math.sin(theta); // ­×¥¿¶b¦V¡AÅıºŞ¤lªu Z ¶b©Î¬O Y ¶b? ­ì¥»¥N½X¬O¦Û¥Ñ±ÛÂà¡C
-                    // ¬°¤F°t¦XµøÄ±¡A§Ú­ÌÅıºŞ¤lªu Y ¶b (ª½¥ß) ¤ñ¸û¦n¬İ¡A©ÎªÌ X ¶b (¾î½ö)
-                    // ³o¸Ì³]©w¡GºŞ¶b = X ¶b
+                    const y3d = R * Math.sin(theta); // ä¿®æ­£è»¸å‘ï¼Œè®“ç®¡å­æ²¿ Z è»¸æˆ–æ˜¯ Y è»¸? åŸæœ¬ä»£ç¢¼æ˜¯è‡ªç”±æ—‹è½‰ã€‚
+                    // ç‚ºäº†é…åˆè¦–è¦ºï¼Œæˆ‘å€‘è®“ç®¡å­æ²¿ Y è»¸ (ç›´ç«‹) æ¯”è¼ƒå¥½çœ‹ï¼Œæˆ–è€… X è»¸ (æ©«èºº)
+                    // é€™è£¡è¨­å®šï¼šç®¡è»¸ = X è»¸
                     
-                    const finalX = v - lengthAngstrom/2; // ¸m¤¤
+                    const finalX = v - lengthAngstrom/2; // ç½®ä¸­
                     const finalY = R * Math.cos(theta);
                     const finalZ = R * Math.sin(theta);
 
-                    // Àx¦s­ì¤l¦ì¸m»P¯Á¤Ş¡A¥Î©ó«ØÁä
+                    // å„²å­˜åŸå­ä½ç½®èˆ‡ç´¢å¼•ï¼Œç”¨æ–¼å»ºéµ
                     atoms.push({ x: finalX, y: finalY, z: finalZ });
 
-                    // ³]©w Instance
+                    // è¨­å®š Instance
                     if (atomCount < MAX_ATOMS) {
                         dummy.position.set(finalX, finalY, finalZ);
                         dummy.scale.set(1, 1, 1);
@@ -429,18 +429,18 @@
         atomMesh.count = atomCount;
         atomMesh.instanceMatrix.needsUpdate = true;
 
-        // 3. ¥Í¦¨¤Æ¾ÇÁä (°ò©ó 3D ¶ZÂ÷)
-        // ³o¬O³ÌÃ­°·ªº¤èªk¡A¥i¥H¦Û°Ê³B²z±²¦±³BªºÁ_¦X
+        // 3. ç”ŸæˆåŒ–å­¸éµ (åŸºæ–¼ 3D è·é›¢)
+        // é€™æ˜¯æœ€ç©©å¥çš„æ–¹æ³•ï¼Œå¯ä»¥è‡ªå‹•è™•ç†æ²æ›²è™•çš„ç¸«åˆ
         let bondCount = 0;
-        const bondLimit = 1.6; // µy·L¤j©ó 1.42 ¥H®e³\»~®t
+        const bondLimit = 1.6; // ç¨å¾®å¤§æ–¼ 1.42 ä»¥å®¹è¨±èª¤å·®
         const bondLimitSq = bondLimit * bondLimit;
 
         for (let i = 0; i < atoms.length; i++) {
             const p1 = atoms[i];
-            // ¥uÀË¬d j > i Á×§K­«½Æ
-            // ¬°¤F®Ä¯à¡A¥i¥H¥uÀË¬dªşªñªº index¡A¦ı³o¸Ì N ¤£¤j¡Aª½±µ±½´y¨S°İÃD
-            // Àu¤Æ¡G¥uÀË¬d«á­±ªº 100 ­Ó­ì¤l? ¤£¦æ¡A±²¦±³B¯Á¤Ş®t«Ü¤j¡C
-            // 2000­Ó­ì¤l N^2 = 400¸U¦¸­pºâ¡AJS ¶]±o°Ê (¬ù 10-20ms)
+            // åªæª¢æŸ¥ j > i é¿å…é‡è¤‡
+            // ç‚ºäº†æ•ˆèƒ½ï¼Œå¯ä»¥åªæª¢æŸ¥é™„è¿‘çš„ indexï¼Œä½†é€™è£¡ N ä¸å¤§ï¼Œç›´æ¥æƒææ²’å•é¡Œ
+            // å„ªåŒ–ï¼šåªæª¢æŸ¥å¾Œé¢çš„ 100 å€‹åŸå­? ä¸è¡Œï¼Œæ²æ›²è™•ç´¢å¼•å·®å¾ˆå¤§ã€‚
+            // 2000å€‹åŸå­ N^2 = 400è¬æ¬¡è¨ˆç®—ï¼ŒJS è·‘å¾—å‹• (ç´„ 10-20ms)
             
             for (let j = i + 1; j < atoms.length; j++) {
                 const p2 = atoms[j];
@@ -450,7 +450,7 @@
                 const distSq = dx*dx + dy*dy + dz*dz;
 
                 if (distSq < bondLimitSq) {
-                    // «Ø¥ßÁäµ²
+                    // å»ºç«‹éµçµ
                     if (bondCount < MAX_ATOMS * 1.5) {
                         const dist = Math.sqrt(distSq);
                         const midX = (p1.x + p2.x) / 2;
@@ -459,15 +459,15 @@
 
                         dummy.position.set(midX, midY, midZ);
                         
-                        // ­pºâ±ÛÂà (Quaternion) ¨Ï¶ê¬W¹ï»ô¨âÂI
-                        // ¹w³]¶ê¬W¬O´Â¤Wªº (0,1,0) (¦]¬°§Ú­Ì¤W­± geometry rotateX ³B²z¹L¡A³o¸Ì°²³]­ì©l¦V Y)
-                        // ­×¥¿¡G§Ú­Ì¤W­± geometry ¤w¸g rotateX(PI/2) Åı¥¦ÅÜ Z ¶b¦V
-                        // ©Ò¥H§Ú­Ì¥Î lookAt ÅŞ¿è
+                        // è¨ˆç®—æ—‹è½‰ (Quaternion) ä½¿åœ“æŸ±å°é½Šå…©é»
+                        // é è¨­åœ“æŸ±æ˜¯æœä¸Šçš„ (0,1,0) (å› ç‚ºæˆ‘å€‘ä¸Šé¢ geometry rotateX è™•ç†éï¼Œé€™è£¡å‡è¨­åŸå§‹å‘ Y)
+                        // ä¿®æ­£ï¼šæˆ‘å€‘ä¸Šé¢ geometry å·²ç¶“ rotateX(PI/2) è®“å®ƒè®Š Z è»¸å‘
+                        // æ‰€ä»¥æˆ‘å€‘ç”¨ lookAt é‚è¼¯
                         
                         dummy.lookAt(p2.x, p2.y, p2.z); 
-                        // lookAt Åı Z ¶b«ü¦V¥Ø¼Ğ¡A³o­è¦n°t¦X§Ú­ÌÂà¹Lªº Geometry
+                        // lookAt è®“ Z è»¸æŒ‡å‘ç›®æ¨™ï¼Œé€™å‰›å¥½é…åˆæˆ‘å€‘è½‰éçš„ Geometry
                         
-                        dummy.scale.set(1, 1, dist); // ©Ôªø Z ¶b
+                        dummy.scale.set(1, 1, dist); // æ‹‰é•· Z è»¸
                         dummy.updateMatrix();
                         
                         bondMesh.setMatrixAt(bondCount, dummy.matrix);
@@ -481,7 +481,7 @@
     }
 
 
-    // --- MediaPipe ÅŞ¿è («O¯d­ì¼Ë) ---
+    // --- MediaPipe é‚è¼¯ (ä¿ç•™åŸæ¨£) ---
     const videoElement = document.getElementById('input_video');
     const statusIndicator = document.getElementById('status-indicator');
 
@@ -545,12 +545,12 @@
     });
     cameraUtils.start();
 
-    // --- ´è¬V°j°é ---
+    // --- æ¸²æŸ“è¿´åœˆ ---
     function animate() {
         requestAnimationFrame(animate);
 
         if (cntGroup) {
-            // ¥­·Æ´¡­È
+            // å¹³æ»‘æ’å€¼
             cntGroup.rotation.y += (currentRotationY - cntGroup.rotation.y) * 0.1;
             cntGroup.rotation.x += (currentRotationX - cntGroup.rotation.x) * 0.1;
             
@@ -561,9 +561,9 @@
         renderer.render(scene, camera);
     }
 
-    // ±Ò°Ê
+    // å•Ÿå‹•
     initThree();
-    // ¹w³]¥Í¦¨ 5,5 ªø«× 20
+    // é è¨­ç”Ÿæˆ 5,5 é•·åº¦ 20
     updateTypeUI(); 
     animate();
 
