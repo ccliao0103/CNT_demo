@@ -30,14 +30,32 @@
         /* 隱藏攝影機 */
         .input_video { position: absolute !important; visibility: hidden !important; width: 1px; height: 1px; opacity: 0; }
 
-        /* 狀態提示 (修改 2: 更新提示文字) */
+        /* 狀態提示 */
         #gesture-hint {
             position: absolute; bottom: 20px; left: 0; width: 100%;
             text-align: center; font-size: 14px; color: #888; z-index: 5;
             text-shadow: 1px 1px 2px black;
         }
 
-        /* (修改 3: 已移除特效字卡的 CSS) */
+        /* 隱藏彩蛋樣式 (平常看不見) */
+        #teacher-msg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3.5rem; /* 手機上字體適中 */
+            font-weight: 900;
+            color: #FFD700; /* 金色 */
+            text-shadow: 0 0 10px #FF4500, 0 0 20px #FF4500, 2px 2px 0px #fff;
+            z-index: 100;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+            white-space: nowrap;
+            opacity: 0;
+        }
+        #teacher-msg.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -61,7 +79,9 @@
         </div>
     </div>
 
-    <div id="gesture-hint">✊握拳:縮小 | 🖐️張開:放大</div>
+    <div id="teacher-msg">廖老師好帥 😎</div>
+
+    <div id="gesture-hint">✊握拳:縮小 | 🖐️張開:放大 | ✌️勝利:彩蛋</div>
 
     <div id="canvas-container"></div>
     <video id="input_video" class="input_video" playsinline></video>
@@ -101,18 +121,18 @@
         cntGroup = new THREE.Group();
         scene.add(cntGroup);
 
-        // --- 視覺設定：球棍模型 ---
+        // --- 視覺設定 ---
         
-        // 1. 原子：小球
+        // 1. 原子
         const atomGeo = new THREE.SphereGeometry(0.35, 16, 16); 
         const atomMat = new THREE.MeshPhongMaterial({ color: 0x999999, shininess: 100 });
         atomMesh = new THREE.InstancedMesh(atomGeo, atomMat, MAX_ATOMS);
         cntGroup.add(atomMesh);
 
-        // 2. 鍵結：細棍 (修改 6: 修正幾何中心以確保連續性)
+        // 2. 鍵結 (確保連續性)
         const bondGeo = new THREE.CylinderGeometry(0.1, 0.1, 1, 8); 
-        // bondGeo.translate(0, 0.5, 0); // <--- 【關鍵修改】移除這行，讓軸心保持在中心
-        bondGeo.rotateX(Math.PI / 2); // 轉向讓 Z 軸為長度方向，方便 lookAt 對齊
+        // 關鍵：不移動中心點 (translate)，讓幾何中心保持在 (0,0,0)
+        bondGeo.rotateX(Math.PI / 2); 
         
         const bondMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
         bondMesh = new THREE.InstancedMesh(bondGeo, bondMat, MAX_ATOMS * 1.5);
@@ -179,7 +199,7 @@
         atomMesh.count = atomCount;
         atomMesh.instanceMatrix.needsUpdate = true;
 
-        // 生成鍵結
+        // 生成連續鍵結
         let bondCount = 0;
         const bondLimitSq = 1.9 * 1.9; 
 
@@ -193,16 +213,12 @@
                 if (distSq < bondLimitSq) {
                     if (bondCount < MAX_ATOMS * 1.5) {
                         const dist = Math.sqrt(distSq);
-                        // 計算兩點中點
                         const midX = (atoms[i].x + atoms[j].x) / 2;
                         const midY = (atoms[i].y + atoms[j].y) / 2;
                         const midZ = (atoms[i].z + atoms[j].z) / 2;
 
-                        // 將圓柱(軸心在中心)放置於中點
                         dummy.position.set(midX, midY, midZ);
-                        // 將 Z 軸指向目標點 (因為我們上面 rotateX(PI/2) 了)
                         dummy.lookAt(atoms[j].x, atoms[j].y, atoms[j].z);
-                        // Z 軸縮放至兩點距離，達到完美連接
                         dummy.scale.set(1, 1, dist);
                         dummy.updateMatrix();
                         
@@ -217,11 +233,9 @@
     }
 
     // --- MediaPipe 手勢邏輯 ---
-    // (修改 7: 移除 msgDiv 變數)
+    const msgDiv = document.getElementById('teacher-msg');
     
     function onResults(results) {
-        // (修改 8: 移除 isVictory 變數)
-
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             const landmarks = results.multiHandLandmarks[0];
             const wrist = landmarks[0];
@@ -240,20 +254,29 @@
             // --- 手勢判定 ---
             const isFist = (dIndex < 0.25 && dMiddle < 0.25 && dRing < 0.25 && dPinky < 0.25);
             const isOpen = (dIndex > 0.3 && dMiddle > 0.3 && dRing > 0.3 && dPinky > 0.3);
-            // (修改 9: 移除勝利手勢判定)
-
-            // --- 觸發功能 (修改 10: 移除字卡觸發邏輯) ---
             
-            // 縮放邏輯
-            if (isFist) {
-                currentScale -= 0.03; // ✊ 縮小
-            } else if (isOpen) {
-                currentScale += 0.03; // 🖐️ 放大
-            }
-            currentScale = Math.max(0.2, Math.min(currentScale, 6.0));
+            // ✌️ 勝利手勢 (食指中指直，無名小指彎)
+            const isVictory = (dIndex > 0.3 && dMiddle > 0.3 && dRing < 0.25 && dPinky < 0.25);
 
-            // 旋轉邏輯
-            if (lastHandX !== null && lastHandY !== null) {
+            // --- 觸發功能 ---
+            
+            // 1. 彩蛋
+            if (isVictory) {
+                msgDiv.classList.add('show');
+            } else {
+                msgDiv.classList.remove('show');
+                
+                // 2. 縮放
+                if (isFist) {
+                    currentScale -= 0.03; // ✊ 縮小
+                } else if (isOpen) {
+                    currentScale += 0.03; // 🖐️ 放大
+                }
+                currentScale = Math.max(0.2, Math.min(currentScale, 6.0));
+            }
+
+            // 3. 旋轉 (只要手在移動就轉，除非在比YA)
+            if (lastHandX !== null && lastHandY !== null && !isVictory) {
                 const deltaX = handCenter.x - lastHandX;
                 const deltaY = handCenter.y - lastHandY;
                 const sensitivity = 5.0;
@@ -266,7 +289,7 @@
 
         } else {
             lastHandX = null;
-            // (修改 11: 移除 hide msgDiv 邏輯)
+            msgDiv.classList.remove('show');
         }
     }
     
@@ -274,7 +297,7 @@
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
 
-    // --- UI 連動 (維持不變) ---
+    // --- UI 連動 ---
     function updateTypeUI() {
         const type = document.getElementById('type-select').value;
         const nInput = document.getElementById('n-input');
